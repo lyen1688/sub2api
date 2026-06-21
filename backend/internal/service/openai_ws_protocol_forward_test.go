@@ -3821,7 +3821,7 @@ func TestOpenAIWSFingerprintRuntimeHeadersOverrideDefaults(t *testing.T) {
 	}
 
 	headers := svc.buildOpenAIWSNeutralHeaders(account, "tok_abc", decision, true)
-	applyOpenAIWSFingerprintRuntimeHeaders(headers, runtime)
+	svc.applyOpenAIWSFingerprintRuntimeHeaders(context.Background(), headers, runtime, false)
 
 	require.Equal(t, "router-upstream/2.0", headers.Get("user-agent"))
 	require.Equal(t, "router-originator", headers.Get("originator"))

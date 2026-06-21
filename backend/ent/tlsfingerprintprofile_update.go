@@ -83,6 +83,20 @@ func (_u *TLSFingerprintProfileUpdate) ClearDescription() *TLSFingerprintProfile
 	return _u
 }
 
+// SetUserAgent sets the "user_agent" field.
+func (_u *TLSFingerprintProfileUpdate) SetUserAgent(v string) *TLSFingerprintProfileUpdate {
+	_u.mutation.SetUserAgent(v)
+	return _u
+}
+
+// SetNillableUserAgent sets the "user_agent" field if the given value is not nil.
+func (_u *TLSFingerprintProfileUpdate) SetNillableUserAgent(v *string) *TLSFingerprintProfileUpdate {
+	if v != nil {
+		_u.SetUserAgent(*v)
+	}
+	return _u
+}
+
 // SetEnableGrease sets the "enable_grease" field.
 func (_u *TLSFingerprintProfileUpdate) SetEnableGrease(v bool) *TLSFingerprintProfileUpdate {
 	_u.mutation.SetEnableGrease(v)
@@ -366,6 +380,11 @@ func (_u *TLSFingerprintProfileUpdate) check() error {
 			return &ValidationError{Name: "platform", err: fmt.Errorf(`ent: validator failed for field "TLSFingerprintProfile.platform": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.UserAgent(); ok {
+		if err := tlsfingerprintprofile.UserAgentValidator(v); err != nil {
+			return &ValidationError{Name: "user_agent", err: fmt.Errorf(`ent: validator failed for field "TLSFingerprintProfile.user_agent": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -395,6 +414,9 @@ func (_u *TLSFingerprintProfileUpdate) sqlSave(ctx context.Context) (_node int, 
 	}
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(tlsfingerprintprofile.FieldDescription, field.TypeString)
+	}
+	if value, ok := _u.mutation.UserAgent(); ok {
+		_spec.SetField(tlsfingerprintprofile.FieldUserAgent, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.EnableGrease(); ok {
 		_spec.SetField(tlsfingerprintprofile.FieldEnableGrease, field.TypeBool, value)
@@ -602,6 +624,20 @@ func (_u *TLSFingerprintProfileUpdateOne) SetNillableDescription(v *string) *TLS
 // ClearDescription clears the value of the "description" field.
 func (_u *TLSFingerprintProfileUpdateOne) ClearDescription() *TLSFingerprintProfileUpdateOne {
 	_u.mutation.ClearDescription()
+	return _u
+}
+
+// SetUserAgent sets the "user_agent" field.
+func (_u *TLSFingerprintProfileUpdateOne) SetUserAgent(v string) *TLSFingerprintProfileUpdateOne {
+	_u.mutation.SetUserAgent(v)
+	return _u
+}
+
+// SetNillableUserAgent sets the "user_agent" field if the given value is not nil.
+func (_u *TLSFingerprintProfileUpdateOne) SetNillableUserAgent(v *string) *TLSFingerprintProfileUpdateOne {
+	if v != nil {
+		_u.SetUserAgent(*v)
+	}
 	return _u
 }
 
@@ -901,6 +937,11 @@ func (_u *TLSFingerprintProfileUpdateOne) check() error {
 			return &ValidationError{Name: "platform", err: fmt.Errorf(`ent: validator failed for field "TLSFingerprintProfile.platform": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.UserAgent(); ok {
+		if err := tlsfingerprintprofile.UserAgentValidator(v); err != nil {
+			return &ValidationError{Name: "user_agent", err: fmt.Errorf(`ent: validator failed for field "TLSFingerprintProfile.user_agent": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -947,6 +988,9 @@ func (_u *TLSFingerprintProfileUpdateOne) sqlSave(ctx context.Context) (_node *T
 	}
 	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(tlsfingerprintprofile.FieldDescription, field.TypeString)
+	}
+	if value, ok := _u.mutation.UserAgent(); ok {
+		_spec.SetField(tlsfingerprintprofile.FieldUserAgent, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.EnableGrease(); ok {
 		_spec.SetField(tlsfingerprintprofile.FieldEnableGrease, field.TypeBool, value)

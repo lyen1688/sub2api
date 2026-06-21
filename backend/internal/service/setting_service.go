@@ -174,6 +174,19 @@ const antigravityUserAgentVersionCacheTTL = 60 * time.Second
 const antigravityUserAgentVersionErrorTTL = 5 * time.Second
 const antigravityUserAgentVersionDBTimeout = 5 * time.Second
 
+// DefaultOpenAICodexUserAgent OpenAI Codex 默认 User-Agent（用于避免 TLS 指纹模板缺 UA 时暴露 Go 默认 UA）。
+const DefaultOpenAICodexUserAgent = "codex-tui/0.125.0 (Ubuntu 22.4.0; x86_64) xterm-256color (codex-tui; 0.125.0)"
+
+// cachedOpenAICodexUserAgent 缓存 OpenAI Codex UA（进程内缓存，60s TTL）。
+type cachedOpenAICodexUserAgent struct {
+	value     string
+	expiresAt int64 // unix nano
+}
+
+const openAICodexUserAgentCacheTTL = 60 * time.Second
+const openAICodexUserAgentErrorTTL = 5 * time.Second
+const openAICodexUserAgentDBTimeout = 5 * time.Second
+
 // cachedOpenAIAllowCodexPlugin Codex 插件放行开关缓存（进程内缓存，60s TTL）。
 type cachedOpenAIAllowCodexPlugin struct {
 	value     bool
@@ -214,6 +227,8 @@ type SettingService struct {
 	webSearchManagerBuilder     WebSearchManagerBuilder
 	antigravityUAVersionCache   atomic.Value // *cachedAntigravityUserAgentVersion
 	antigravityUAVersionSF      singleflight.Group
+	openAICodexUACache          atomic.Value // *cachedOpenAICodexUserAgent
+	openAICodexUASF             singleflight.Group
 	openAIAllowCodexPluginCache atomic.Value // *cachedOpenAIAllowCodexPlugin
 	openAIAllowCodexPluginSF    singleflight.Group
 
@@ -1057,6 +1072,55 @@ func (s *SettingService) GetAntigravityUserAgentVersion(ctx context.Context) str
 	})
 	if version, ok := result.(string); ok && version != "" {
 		return version
+	}
+	return fallback
+}
+
+// GetOpenAICodexUserAgent 返回 OpenAI Codex 上游请求使用的 User-Agent。
+// 后台设置优先；为空、缺失或读取失败时回退到内置默认值。
+func (s *SettingService) GetOpenAICodexUserAgent(ctx context.Context) string {
+	fallback := DefaultOpenAICodexUserAgent
+	if s == nil || s.settingRepo == nil {
+		return fallback
+	}
+	if cached, ok := s.openAICodexUACache.Load().(*cachedOpenAICodexUserAgent); ok && cached != nil {
+		if time.Now().UnixNano() < cached.expiresAt {
+			return cached.value
+		}
+	}
+
+	result, _, _ := s.openAICodexUASF.Do("openai_codex_user_agent", func() (any, error) {
+		if cached, ok := s.openAICodexUACache.Load().(*cachedOpenAICodexUserAgent); ok && cached != nil {
+			if time.Now().UnixNano() < cached.expiresAt {
+				return cached.value, nil
+			}
+		}
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		dbCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), openAICodexUserAgentDBTimeout)
+		defer cancel()
+		value, err := s.settingRepo.GetValue(dbCtx, SettingKeyOpenAICodexUserAgent)
+		if err != nil && !errors.Is(err, ErrSettingNotFound) {
+			slog.Warn("failed to get openai codex user agent setting", "error", err)
+			s.openAICodexUACache.Store(&cachedOpenAICodexUserAgent{
+				value:     fallback,
+				expiresAt: time.Now().Add(openAICodexUserAgentErrorTTL).UnixNano(),
+			})
+			return fallback, nil
+		}
+		userAgent := strings.TrimSpace(value)
+		if userAgent == "" {
+			userAgent = fallback
+		}
+		s.openAICodexUACache.Store(&cachedOpenAICodexUserAgent{
+			value:     userAgent,
+			expiresAt: time.Now().Add(openAICodexUserAgentCacheTTL).UnixNano(),
+		})
+		return userAgent, nil
+	})
+	if userAgent, ok := result.(string); ok && userAgent != "" {
+		return userAgent
 	}
 	return fallback
 }
@@ -2450,6 +2514,15 @@ func (s *SettingService) refreshCachedSettings(settings *SystemSettings) {
 	s.antigravityUAVersionCache.Store(&cachedAntigravityUserAgentVersion{
 		version:   antigravityUserAgentVersion,
 		expiresAt: time.Now().Add(antigravityUserAgentVersionCacheTTL).UnixNano(),
+	})
+	s.openAICodexUASF.Forget("openai_codex_user_agent")
+	openAICodexUserAgent := strings.TrimSpace(settings.OpenAICodexUserAgent)
+	if openAICodexUserAgent == "" {
+		openAICodexUserAgent = DefaultOpenAICodexUserAgent
+	}
+	s.openAICodexUACache.Store(&cachedOpenAICodexUserAgent{
+		value:     openAICodexUserAgent,
+		expiresAt: time.Now().Add(openAICodexUserAgentCacheTTL).UnixNano(),
 	})
 	openAIAdvancedSchedulerSettingSF.Forget(openAIAdvancedSchedulerSettingKey)
 	openAIAdvancedSchedulerSettingCache.Store(&cachedOpenAIAdvancedSchedulerSetting{

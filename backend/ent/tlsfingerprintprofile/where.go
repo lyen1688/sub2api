@@ -79,6 +79,11 @@ func Description(v string) predicate.TLSFingerprintProfile {
 	return predicate.TLSFingerprintProfile(sql.FieldEQ(FieldDescription, v))
 }
 
+// UserAgent applies equality check predicate on the "user_agent" field. It's identical to UserAgentEQ.
+func UserAgent(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldEQ(FieldUserAgent, v))
+}
+
 // EnableGrease applies equality check predicate on the "enable_grease" field. It's identical to EnableGreaseEQ.
 func EnableGrease(v bool) predicate.TLSFingerprintProfile {
 	return predicate.TLSFingerprintProfile(sql.FieldEQ(FieldEnableGrease, v))
@@ -367,6 +372,71 @@ func DescriptionEqualFold(v string) predicate.TLSFingerprintProfile {
 // DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
 func DescriptionContainsFold(v string) predicate.TLSFingerprintProfile {
 	return predicate.TLSFingerprintProfile(sql.FieldContainsFold(FieldDescription, v))
+}
+
+// UserAgentEQ applies the EQ predicate on the "user_agent" field.
+func UserAgentEQ(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldEQ(FieldUserAgent, v))
+}
+
+// UserAgentNEQ applies the NEQ predicate on the "user_agent" field.
+func UserAgentNEQ(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldNEQ(FieldUserAgent, v))
+}
+
+// UserAgentIn applies the In predicate on the "user_agent" field.
+func UserAgentIn(vs ...string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldIn(FieldUserAgent, vs...))
+}
+
+// UserAgentNotIn applies the NotIn predicate on the "user_agent" field.
+func UserAgentNotIn(vs ...string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldNotIn(FieldUserAgent, vs...))
+}
+
+// UserAgentGT applies the GT predicate on the "user_agent" field.
+func UserAgentGT(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldGT(FieldUserAgent, v))
+}
+
+// UserAgentGTE applies the GTE predicate on the "user_agent" field.
+func UserAgentGTE(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldGTE(FieldUserAgent, v))
+}
+
+// UserAgentLT applies the LT predicate on the "user_agent" field.
+func UserAgentLT(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldLT(FieldUserAgent, v))
+}
+
+// UserAgentLTE applies the LTE predicate on the "user_agent" field.
+func UserAgentLTE(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldLTE(FieldUserAgent, v))
+}
+
+// UserAgentContains applies the Contains predicate on the "user_agent" field.
+func UserAgentContains(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldContains(FieldUserAgent, v))
+}
+
+// UserAgentHasPrefix applies the HasPrefix predicate on the "user_agent" field.
+func UserAgentHasPrefix(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldHasPrefix(FieldUserAgent, v))
+}
+
+// UserAgentHasSuffix applies the HasSuffix predicate on the "user_agent" field.
+func UserAgentHasSuffix(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldHasSuffix(FieldUserAgent, v))
+}
+
+// UserAgentEqualFold applies the EqualFold predicate on the "user_agent" field.
+func UserAgentEqualFold(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldEqualFold(FieldUserAgent, v))
+}
+
+// UserAgentContainsFold applies the ContainsFold predicate on the "user_agent" field.
+func UserAgentContainsFold(v string) predicate.TLSFingerprintProfile {
+	return predicate.TLSFingerprintProfile(sql.FieldContainsFold(FieldUserAgent, v))
 }
 
 // EnableGreaseEQ applies the EQ predicate on the "enable_grease" field.

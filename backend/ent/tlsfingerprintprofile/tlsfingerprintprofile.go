@@ -23,6 +23,8 @@ const (
 	FieldPlatform = "platform"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// FieldUserAgent holds the string denoting the user_agent field in the database.
+	FieldUserAgent = "user_agent"
 	// FieldEnableGrease holds the string denoting the enable_grease field in the database.
 	FieldEnableGrease = "enable_grease"
 	// FieldCipherSuites holds the string denoting the cipher_suites field in the database.
@@ -61,6 +63,7 @@ var Columns = []string{
 	FieldName,
 	FieldPlatform,
 	FieldDescription,
+	FieldUserAgent,
 	FieldEnableGrease,
 	FieldCipherSuites,
 	FieldCurves,
@@ -99,6 +102,10 @@ var (
 	DefaultPlatform string
 	// PlatformValidator is a validator for the "platform" field. It is called by the builders before save.
 	PlatformValidator func(string) error
+	// DefaultUserAgent holds the default value on creation for the "user_agent" field.
+	DefaultUserAgent string
+	// UserAgentValidator is a validator for the "user_agent" field. It is called by the builders before save.
+	UserAgentValidator func(string) error
 	// DefaultEnableGrease holds the default value on creation for the "enable_grease" field.
 	DefaultEnableGrease bool
 )
@@ -134,6 +141,11 @@ func ByPlatform(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByUserAgent orders the results by the user_agent field.
+func ByUserAgent(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUserAgent, opts...).ToFunc()
 }
 
 // ByEnableGrease orders the results by the enable_grease field.

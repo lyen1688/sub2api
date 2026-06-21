@@ -5266,7 +5266,7 @@ oauthTransformDone:
 		if err != nil {
 			return nil, err
 		}
-		applyOpenAITLSFingerprintRuntime(upstreamReq, tlsRuntime)
+		s.applyOpenAITLSFingerprintRuntime(ctx, upstreamReq, tlsRuntime, account.IsOpenAIPassthroughEnabled())
 
 		// Get proxy URL
 		proxyURL := ""
@@ -5900,7 +5900,7 @@ func (s *OpenAIGatewayService) forwardOpenAIPassthrough(
 		if err != nil {
 			return nil, err
 		}
-		applyOpenAITLSFingerprintRuntime(upstreamReq, tlsRuntime)
+		s.applyOpenAITLSFingerprintRuntime(ctx, upstreamReq, tlsRuntime, true)
 
 		SetOpsLatencyMs(c, OpsOpenAIForwardPrepareLatencyMsKey, time.Since(startTime).Milliseconds())
 		upstreamStart := time.Now()

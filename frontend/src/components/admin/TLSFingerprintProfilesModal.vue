@@ -459,6 +459,17 @@
           </div>
         </div>
 
+        <div>
+          <label class="input-label">{{ t('admin.tlsFingerprintProfiles.form.userAgent') }}</label>
+          <input
+            v-model="form.user_agent"
+            type="text"
+            class="input font-mono text-sm"
+            :placeholder="t('admin.tlsFingerprintProfiles.form.userAgentPlaceholder')"
+          />
+          <p class="input-hint text-xs">{{ t('admin.tlsFingerprintProfiles.form.userAgentHint') }}</p>
+        </div>
+
         <div class="flex items-center gap-3">
           <button
             type="button"
@@ -587,6 +598,7 @@ import type {
   TLSFingerprintProfile
 } from '@/api/admin/tlsFingerprintProfile'
 import { formatDateTime } from '@/utils/format'
+import { parseTLSFingerprintYaml } from '@/utils/tlsFingerprintYaml'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
@@ -660,6 +672,7 @@ const form = reactive({
   platform: 'openai',
   name: '',
   description: null as string | null,
+  user_agent: '',
   enable_grease: false
 })
 
@@ -957,6 +970,7 @@ const resetForm = () => {
   form.platform = 'openai'
   form.name = ''
   form.description = null
+  form.user_agent = ''
   form.enable_grease = false
   fieldInputs.cipher_suites = ''
   fieldInputs.curves = ''
@@ -977,77 +991,26 @@ const parseYamlInput = () => {
   const text = yamlInput.value.trim()
   if (!text) return
 
-  const lines = text.split('\n')
-  let foundName = false
+  const parsed = parseTLSFingerprintYaml(text)
+  if (parsed.platform !== undefined) form.platform = parsed.platform
+  if (parsed.name) form.name = parsed.name
+  if (parsed.description !== undefined) form.description = parsed.description
+  if (parsed.user_agent !== undefined) form.user_agent = parsed.user_agent
+  if (parsed.enable_grease !== undefined) form.enable_grease = parsed.enable_grease
+  if (parsed.cipher_suites !== undefined) fieldInputs.cipher_suites = parsed.cipher_suites
+  if (parsed.curves !== undefined) fieldInputs.curves = parsed.curves
+  if (parsed.point_formats !== undefined) fieldInputs.point_formats = parsed.point_formats
+  if (parsed.signature_algorithms !== undefined) fieldInputs.signature_algorithms = parsed.signature_algorithms
+  if (parsed.alpn_protocols !== undefined) fieldInputs.alpn_protocols = parsed.alpn_protocols
+  if (parsed.supported_versions !== undefined) fieldInputs.supported_versions = parsed.supported_versions
+  if (parsed.key_share_groups !== undefined) fieldInputs.key_share_groups = parsed.key_share_groups
+  if (parsed.psk_modes !== undefined) fieldInputs.psk_modes = parsed.psk_modes
+  if (parsed.extensions !== undefined) fieldInputs.extensions = parsed.extensions
+  if (parsed.compress_cert_algos !== undefined) fieldInputs.compress_cert_algos = parsed.compress_cert_algos
+  if (parsed.delegated_credentials_algorithms !== undefined) fieldInputs.delegated_credentials_algorithms = parsed.delegated_credentials_algorithms
+  if (parsed.application_settings_protocols !== undefined) fieldInputs.application_settings_protocols = parsed.application_settings_protocols
 
-  for (const line of lines) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-
-    const match = trimmed.match(/^(\w+):\s*(.+)$/)
-    if (!match) continue
-
-    const [, key, rawValue] = match
-    const value = rawValue.trim()
-
-    switch (key) {
-      case 'platform':
-        form.platform = value.replace(/^["']|["']$/g, '')
-        break
-      case 'name': {
-        const unquoted = value.replace(/^["']|["']$/g, '')
-        if (unquoted) {
-          form.name = unquoted
-          foundName = true
-        }
-        break
-      }
-      case 'description': {
-        const unquoted = value.replace(/^["']|["']$/g, '')
-        form.description = unquoted || null
-        break
-      }
-      case 'enable_grease':
-        form.enable_grease = value === 'true'
-        break
-      case 'cipher_suites':
-      case 'curves':
-      case 'point_formats':
-      case 'signature_algorithms':
-      case 'supported_versions':
-      case 'key_share_groups':
-      case 'psk_modes':
-      case 'compress_cert_algos':
-      case 'delegated_credentials_algorithms':
-      case 'extensions': {
-        const arrMatch = value.match(/^\[(.*)?\]$/)
-        if (arrMatch) {
-          const inner = arrMatch[1] || ''
-          fieldInputs[key as keyof typeof fieldInputs] = inner
-            .split(',')
-            .map(s => s.trim())
-            .filter(s => s.length > 0)
-            .join(', ')
-        }
-        break
-      }
-      case 'alpn_protocols':
-      case 'application_settings_protocols': {
-        const arrMatch = value.match(/^\[(.*)?\]$/)
-        if (arrMatch) {
-          const inner = arrMatch[1] || ''
-          fieldInputs[key as keyof typeof fieldInputs] = inner
-            .split(',')
-            .map(s => s.trim().replace(/^["']|["']$/g, ''))
-            .filter(s => s.length > 0)
-            .join(', ')
-        }
-        break
-      }
-    }
-  }
-
-  if (foundName) {
+  if (parsed.name) {
     appStore.showSuccess(t('admin.tlsFingerprintProfiles.form.yamlParsed'))
   } else {
     appStore.showError(t('admin.tlsFingerprintProfiles.form.yamlParseFailed'))
@@ -1092,6 +1055,7 @@ const handleEdit = (profile: TLSFingerprintProfile) => {
   form.platform = profile.platform || ''
   form.name = profile.name
   form.description = profile.description
+  form.user_agent = profile.user_agent || ''
   form.enable_grease = profile.enable_grease
   fieldInputs.cipher_suites = formatNumericArray(profile.cipher_suites)
   fieldInputs.curves = formatPlainNumericArray(profile.curves)
@@ -1125,6 +1089,7 @@ const handleSubmit = async () => {
       platform: form.platform.trim(),
       name: form.name.trim(),
       description: form.description?.trim() || null,
+      user_agent: form.user_agent.trim(),
       enable_grease: form.enable_grease,
       cipher_suites: parseNumericArray(fieldInputs.cipher_suites),
       curves: parseNumericArray(fieldInputs.curves),

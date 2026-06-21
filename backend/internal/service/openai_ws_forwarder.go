@@ -1576,18 +1576,6 @@ func (s *OpenAIGatewayService) buildOpenAIWSNeutralHeaders(
 	return headers
 }
 
-func applyOpenAIWSFingerprintRuntimeHeaders(headers http.Header, runtime openAITLSFingerprintRuntime) {
-	if headers == nil {
-		return
-	}
-	if runtime.UpstreamUserAgent != "" {
-		headers.Set("user-agent", runtime.UpstreamUserAgent)
-	}
-	if runtime.UpstreamOriginator != "" {
-		headers.Set("originator", runtime.UpstreamOriginator)
-	}
-}
-
 func (s *OpenAIGatewayService) buildOpenAIWSCreatePayload(reqBody map[string]any, account *Account) map[string]any {
 	// OpenAI WS Mode 协议：response.create 字段与 HTTP /responses 基本一致。
 	// 保留 stream 字段（与 Codex CLI 一致），仅移除 background。
@@ -2687,7 +2675,7 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 	pool := s.getOpenAIWSConnPool()
 	tlsFPRuntime := s.resolveOpenAITLSFingerprintRuntime(ctx, c, account)
 	wsHeaders, sessionResolution := s.buildOpenAIWSHeaders(c, account, token, decision, isCodexCLI, turnState, turnMetadata, promptCacheKey)
-	applyOpenAIWSFingerprintRuntimeHeaders(wsHeaders, tlsFPRuntime)
+	s.applyOpenAIWSFingerprintRuntimeHeaders(ctx, wsHeaders, tlsFPRuntime, account.IsOpenAIPassthroughEnabled())
 	if httpIngressWSOneShot {
 		// 无会话 one-shot：使用账号级中性握手头，不绑定 session/response。
 		connProfile = openAIWSConnProfileNeutral
@@ -2695,7 +2683,7 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 			forceNewConn = true
 		}
 		wsHeaders = s.buildOpenAIWSNeutralHeaders(account, token, decision, isCodexCLI)
-		applyOpenAIWSFingerprintRuntimeHeaders(wsHeaders, tlsFPRuntime)
+		s.applyOpenAIWSFingerprintRuntimeHeaders(ctx, wsHeaders, tlsFPRuntime, account.IsOpenAIPassthroughEnabled())
 	}
 	if shouldUseOpenAIWSNeutralForColdSession(account, httpIngressWSOneShot, storeDisabled, previousResponseID, sessionHash, turnState, turnMetadata, payload) {
 		useNeutral := preferredConnID == ""
@@ -2714,7 +2702,7 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 				forceNewConn = false
 			}
 			wsHeaders = s.buildOpenAIWSNeutralHeaders(account, token, decision, isCodexCLI)
-			applyOpenAIWSFingerprintRuntimeHeaders(wsHeaders, tlsFPRuntime)
+			s.applyOpenAIWSFingerprintRuntimeHeaders(ctx, wsHeaders, tlsFPRuntime, account.IsOpenAIPassthroughEnabled())
 			promoteNeutralConnToSessionBound = true
 		}
 	}
@@ -4221,7 +4209,7 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 	isCodexCLI = openai.IsCodexOfficialClientByHeaders(c.GetHeader("User-Agent"), c.GetHeader("originator")) || (s.cfg != nil && s.cfg.Gateway.ForceCodexCLI)
 	tlsFPRuntime := s.resolveOpenAITLSFingerprintRuntime(ctx, c, account)
 	wsHeaders, _ := s.buildOpenAIWSHeaders(c, account, token, wsDecision, isCodexCLI, turnState, strings.TrimSpace(c.GetHeader(openAIWSTurnMetadataHeader)), firstPayload.promptCacheKey)
-	applyOpenAIWSFingerprintRuntimeHeaders(wsHeaders, tlsFPRuntime)
+	s.applyOpenAIWSFingerprintRuntimeHeaders(ctx, wsHeaders, tlsFPRuntime, account.IsOpenAIPassthroughEnabled())
 	baseAcquireReq := openAIWSAcquireRequest{
 		Account:    account,
 		WSURL:      wsURL,
@@ -5398,7 +5386,7 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 			// ingress 会话在整个客户端 WS 生命周期内复用同一上游连接；
 			// prompt_cache_key 对握手头的更新仅在未来需要重新建连时生效。
 			updatedHeaders, _ := s.buildOpenAIWSHeaders(c, account, token, wsDecision, isCodexCLI, turnState, strings.TrimSpace(c.GetHeader(openAIWSTurnMetadataHeader)), nextPayload.promptCacheKey)
-			applyOpenAIWSFingerprintRuntimeHeaders(updatedHeaders, tlsFPRuntime)
+			s.applyOpenAIWSFingerprintRuntimeHeaders(ctx, updatedHeaders, tlsFPRuntime, account.IsOpenAIPassthroughEnabled())
 			baseAcquireReq.Headers = updatedHeaders
 		}
 		if nextPayload.previousResponseID != "" {

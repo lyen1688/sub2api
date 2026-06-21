@@ -28,6 +28,8 @@ type TLSFingerprintProfile struct {
 	Platform string `json:"platform,omitempty"`
 	// Description holds the value of the "description" field.
 	Description *string `json:"description,omitempty"`
+	// UserAgent holds the value of the "user_agent" field.
+	UserAgent string `json:"user_agent,omitempty"`
 	// EnableGrease holds the value of the "enable_grease" field.
 	EnableGrease bool `json:"enable_grease,omitempty"`
 	// CipherSuites holds the value of the "cipher_suites" field.
@@ -68,7 +70,7 @@ func (*TLSFingerprintProfile) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case tlsfingerprintprofile.FieldID:
 			values[i] = new(sql.NullInt64)
-		case tlsfingerprintprofile.FieldName, tlsfingerprintprofile.FieldPlatform, tlsfingerprintprofile.FieldDescription:
+		case tlsfingerprintprofile.FieldName, tlsfingerprintprofile.FieldPlatform, tlsfingerprintprofile.FieldDescription, tlsfingerprintprofile.FieldUserAgent:
 			values[i] = new(sql.NullString)
 		case tlsfingerprintprofile.FieldCreatedAt, tlsfingerprintprofile.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -123,6 +125,12 @@ func (_m *TLSFingerprintProfile) assignValues(columns []string, values []any) er
 			} else if value.Valid {
 				_m.Description = new(string)
 				*_m.Description = value.String
+			}
+		case tlsfingerprintprofile.FieldUserAgent:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field user_agent", values[i])
+			} else if value.Valid {
+				_m.UserAgent = value.String
 			}
 		case tlsfingerprintprofile.FieldEnableGrease:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -278,6 +286,9 @@ func (_m *TLSFingerprintProfile) String() string {
 		builder.WriteString("description=")
 		builder.WriteString(*v)
 	}
+	builder.WriteString(", ")
+	builder.WriteString("user_agent=")
+	builder.WriteString(_m.UserAgent)
 	builder.WriteString(", ")
 	builder.WriteString("enable_grease=")
 	builder.WriteString(fmt.Sprintf("%v", _m.EnableGrease))

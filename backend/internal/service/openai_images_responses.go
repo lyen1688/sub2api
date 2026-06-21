@@ -983,7 +983,7 @@ func (s *OpenAIGatewayService) forwardOpenAIImagesOAuth(
 		proxyURL = account.Proxy.URL()
 	}
 	tlsRuntime := s.resolveOpenAITLSFingerprintRuntime(ctx, c, account)
-	applyOpenAITLSFingerprintRuntime(upstreamReq, tlsRuntime)
+	s.applyOpenAITLSFingerprintRuntime(ctx, upstreamReq, tlsRuntime, account.IsOpenAIPassthroughEnabled())
 	upstreamStart := time.Now()
 	resp, err := s.httpUpstream.DoWithTLS(upstreamReq, proxyURL, account.ID, account.Concurrency, tlsRuntime.Profile)
 	SetOpsLatencyMs(c, OpsUpstreamLatencyMsKey, time.Since(upstreamStart).Milliseconds())

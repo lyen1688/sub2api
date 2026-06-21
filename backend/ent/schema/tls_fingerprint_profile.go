@@ -54,6 +54,11 @@ func (TLSFingerprintProfile) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 
+		// user_agent: 与该 TLS 指纹配套的上游 HTTP User-Agent。
+		field.String("user_agent").
+			MaxLen(512).
+			Default(""),
+
 		// enable_grease: 是否启用 GREASE 扩展（Chrome 使用，Node.js 不使用）
 		field.Bool("enable_grease").
 			Default(false),

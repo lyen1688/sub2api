@@ -393,7 +393,7 @@ func (s *OpenAIGatewayService) ForwardAsAnthropic(
 	httpCodexCompatRetryTried := false
 	var resp *http.Response
 	for {
-		applyOpenAITLSFingerprintRuntime(upstreamReq, tlsRuntime)
+		s.applyOpenAITLSFingerprintRuntime(ctx, upstreamReq, tlsRuntime, account.IsOpenAIPassthroughEnabled())
 		SetOpsLatencyMs(c, OpsOpenAIForwardPrepareLatencyMsKey, time.Since(startTime).Milliseconds())
 		upstreamStart := time.Now()
 		resp, err = s.httpUpstream.DoWithTLS(upstreamReq, proxyURL, account.ID, account.Concurrency, tlsRuntime.Profile)

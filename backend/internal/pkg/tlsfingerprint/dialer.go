@@ -20,6 +20,7 @@ import (
 // All slice fields use built-in defaults when empty.
 type Profile struct {
 	Name                           string // Profile name for identification
+	UserAgent                      string // HTTP User-Agent paired with this TLS profile, if captured
 	CipherSuites                   []uint16
 	Curves                         []uint16
 	PointFormats                   []uint16

@@ -149,6 +149,7 @@ func ParseTLSFingerprintCaptureProfile(raw string) (*model.TLSFingerprintProfile
 
 	profile := &model.TLSFingerprintProfile{
 		Name:                           stringField(payload, "name"),
+		UserAgent:                      stringField(payload, "user_agent"),
 		EnableGREASE:                   boolField(payload, "enable_grease"),
 		CipherSuites:                   uint16SliceField(payload, "cipher_suites"),
 		Curves:                         uint16SliceField(payload, "curves"),

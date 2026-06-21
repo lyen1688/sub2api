@@ -425,7 +425,7 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 	}
 	tlsFPRuntime := s.resolveOpenAITLSFingerprintRuntime(ctx, c, account)
 	headers, _ := s.buildOpenAIWSHeaders(c, account, token, wsDecision, isCodexCLI, turnState, turnMetadata, promptCacheKey)
-	applyOpenAIWSFingerprintRuntimeHeaders(headers, tlsFPRuntime)
+	s.applyOpenAIWSFingerprintRuntimeHeaders(ctx, headers, tlsFPRuntime, true)
 	proxyURL := ""
 	if account.ProxyID != nil && account.Proxy != nil {
 		proxyURL = account.Proxy.URL()

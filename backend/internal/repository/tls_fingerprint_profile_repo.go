@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/ent/tlsfingerprintprofile"
@@ -51,6 +52,7 @@ func (r *tlsFingerprintProfileRepository) Create(ctx context.Context, p *model.T
 	builder := r.client.TLSFingerprintProfile.Create().
 		SetName(p.Name).
 		SetPlatform(p.Platform).
+		SetUserAgent(strings.TrimSpace(p.UserAgent)).
 		SetEnableGrease(p.EnableGREASE)
 
 	if p.Description != nil {
@@ -105,6 +107,7 @@ func (r *tlsFingerprintProfileRepository) Update(ctx context.Context, p *model.T
 	builder := r.client.TLSFingerprintProfile.UpdateOneID(p.ID).
 		SetName(p.Name).
 		SetPlatform(p.Platform).
+		SetUserAgent(strings.TrimSpace(p.UserAgent)).
 		SetEnableGrease(p.EnableGREASE)
 
 	if p.Description != nil {
@@ -193,6 +196,7 @@ func (r *tlsFingerprintProfileRepository) toModel(e *ent.TLSFingerprintProfile) 
 		Platform:                       e.Platform,
 		Name:                           e.Name,
 		Description:                    e.Description,
+		UserAgent:                      e.UserAgent,
 		EnableGREASE:                   e.EnableGrease,
 		CipherSuites:                   e.CipherSuites,
 		Curves:                         e.Curves,

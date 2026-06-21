@@ -2498,6 +2498,7 @@ var (
 		{Name: "name", Type: field.TypeString, Unique: true, Size: 100},
 		{Name: "platform", Type: field.TypeString, Size: 50, Default: ""},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "user_agent", Type: field.TypeString, Size: 512, Default: ""},
 		{Name: "enable_grease", Type: field.TypeBool, Default: false},
 		{Name: "cipher_suites", Type: field.TypeJSON, Nullable: true, SchemaType: map[string]string{"postgres": "jsonb"}},
 		{Name: "curves", Type: field.TypeJSON, Nullable: true, SchemaType: map[string]string{"postgres": "jsonb"}},

@@ -461,12 +461,28 @@ func tlsCaptureSamplePayload(sample *TLSFingerprintCaptureSample) (string, error
 		return "", fmt.Errorf("capture sample is required")
 	}
 	if raw := strings.TrimSpace(sample.RawPayload); raw != "" {
-		return raw, nil
+		if strings.TrimSpace(sample.UserAgent) == "" {
+			return raw, nil
+		}
+		profile, err := ParseTLSFingerprintCaptureProfile(raw)
+		if err != nil {
+			return "", err
+		}
+		profile.UserAgent = strings.TrimSpace(sample.UserAgent)
+		encoded, err := json.Marshal(profile)
+		if err != nil {
+			return "", err
+		}
+		return string(encoded), nil
 	}
 	if sample.Profile == nil {
 		return "", &model.ValidationError{Field: "profile", Message: "captured sample profile is required"}
 	}
-	encoded, err := json.Marshal(sample.Profile)
+	profile := *sample.Profile
+	if strings.TrimSpace(profile.UserAgent) == "" {
+		profile.UserAgent = strings.TrimSpace(sample.UserAgent)
+	}
+	encoded, err := json.Marshal(&profile)
 	if err != nil {
 		return "", err
 	}

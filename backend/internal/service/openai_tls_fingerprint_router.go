@@ -11,6 +11,7 @@ import (
 
 type openAITLSFingerprintRuntime struct {
 	Profile            *tlsfingerprint.Profile
+	ProfileSelected    bool
 	UpstreamUserAgent  string
 	UpstreamOriginator string
 	Matched            bool
@@ -23,10 +24,25 @@ func (s *OpenAIGatewayService) SetTLSFingerprintRouterService(routerService *TLS
 	s.tlsFPRouterService = routerService
 }
 
+func (s *OpenAIGatewayService) SetTLSFingerprintProfileService(profileService *TLSFingerprintProfileService) {
+	if s == nil {
+		return
+	}
+	s.tlsFPProfileService = profileService
+}
+
+func (s *OpenAIGatewayService) resolveOpenAITLSProfile(account *Account) (*tlsfingerprint.Profile, bool) {
+	if s == nil || s.tlsFPProfileService == nil {
+		return nil, false
+	}
+	profile := s.tlsFPProfileService.ResolveTLSProfile(account)
+	return profile, account != nil && account.IsOpenAITLSFingerprintEnabled() && profile != nil
+}
+
 func (s *OpenAIGatewayService) resolveOpenAITLSFingerprintRuntime(ctx context.Context, c *gin.Context, account *Account) openAITLSFingerprintRuntime {
 	runtime := openAITLSFingerprintRuntime{}
 	if s != nil {
-		runtime.Profile = s.resolveOpenAITLSProfile(account)
+		runtime.Profile, runtime.ProfileSelected = s.resolveOpenAITLSProfile(account)
 	}
 	if s == nil || s.tlsFPRouterService == nil || account == nil {
 		return runtime
@@ -56,18 +72,107 @@ func (s *OpenAIGatewayService) resolveOpenAITLSFingerprintRuntime(ctx context.Co
 		return runtime
 	}
 	runtime.Profile = profile
+	runtime.ProfileSelected = true
 	runtime.UpstreamUserAgent = strings.TrimSpace(match.UpstreamUserAgent)
 	runtime.UpstreamOriginator = strings.TrimSpace(match.UpstreamOriginator)
 	runtime.Matched = true
 	return runtime
 }
 
-func applyOpenAITLSFingerprintRuntime(req *http.Request, runtime openAITLSFingerprintRuntime) {
+func (s *OpenAIGatewayService) resolveOpenAITLSFingerprintUserAgent(ctx context.Context, runtime openAITLSFingerprintRuntime, passthrough bool) string {
+	if userAgent := strings.TrimSpace(runtime.UpstreamUserAgent); userAgent != "" {
+		return userAgent
+	}
+	if runtime.Profile == nil {
+		return ""
+	}
+	if userAgent := strings.TrimSpace(runtime.Profile.UserAgent); userAgent != "" {
+		return userAgent
+	}
+	if !runtime.ProfileSelected {
+		return ""
+	}
+	if passthrough {
+		return ""
+	}
+	if s != nil && s.settingService != nil {
+		if userAgent := strings.TrimSpace(s.settingService.GetOpenAICodexUserAgent(ctx)); userAgent != "" {
+			return userAgent
+		}
+	}
+	return DefaultOpenAICodexUserAgent
+}
+
+func (s *OpenAIGatewayService) applyOpenAITLSFingerprintRuntime(ctx context.Context, req *http.Request, runtime openAITLSFingerprintRuntime, passthrough bool) {
 	if req == nil {
 		return
 	}
-	if runtime.UpstreamUserAgent != "" {
-		req.Header.Set("User-Agent", runtime.UpstreamUserAgent)
+	if userAgent := s.resolveOpenAITLSFingerprintUserAgent(ctx, runtime, passthrough); userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
+	}
+	if runtime.UpstreamOriginator != "" {
+		req.Header.Set("Originator", runtime.UpstreamOriginator)
+	}
+}
+
+func (s *OpenAIGatewayService) applyOpenAIWSFingerprintRuntimeHeaders(ctx context.Context, headers http.Header, runtime openAITLSFingerprintRuntime, passthrough bool) {
+	if headers == nil {
+		return
+	}
+	if userAgent := s.resolveOpenAITLSFingerprintUserAgent(ctx, runtime, passthrough); userAgent != "" {
+		headers.Set("user-agent", userAgent)
+	}
+	if runtime.UpstreamOriginator != "" {
+		headers.Set("originator", runtime.UpstreamOriginator)
+	}
+}
+
+func (s *AccountTestService) resolveOpenAITLSProfile(account *Account) (*tlsfingerprint.Profile, bool) {
+	if s == nil || s.tlsFPProfileService == nil {
+		return nil, false
+	}
+	profile := s.tlsFPProfileService.ResolveTLSProfile(account)
+	return profile, account != nil && account.IsOpenAITLSFingerprintEnabled() && profile != nil
+}
+
+func (s *AccountTestService) resolveOpenAITLSFingerprintRuntime(account *Account) openAITLSFingerprintRuntime {
+	runtime := openAITLSFingerprintRuntime{}
+	if s != nil {
+		runtime.Profile, runtime.ProfileSelected = s.resolveOpenAITLSProfile(account)
+	}
+	return runtime
+}
+
+func (s *AccountTestService) resolveOpenAITLSFingerprintUserAgent(ctx context.Context, runtime openAITLSFingerprintRuntime, passthrough bool) string {
+	if userAgent := strings.TrimSpace(runtime.UpstreamUserAgent); userAgent != "" {
+		return userAgent
+	}
+	if runtime.Profile == nil {
+		return ""
+	}
+	if userAgent := strings.TrimSpace(runtime.Profile.UserAgent); userAgent != "" {
+		return userAgent
+	}
+	if !runtime.ProfileSelected {
+		return ""
+	}
+	if passthrough {
+		return ""
+	}
+	if s != nil && s.settingService != nil {
+		if userAgent := strings.TrimSpace(s.settingService.GetOpenAICodexUserAgent(ctx)); userAgent != "" {
+			return userAgent
+		}
+	}
+	return DefaultOpenAICodexUserAgent
+}
+
+func (s *AccountTestService) applyOpenAITLSFingerprintRuntime(ctx context.Context, req *http.Request, runtime openAITLSFingerprintRuntime, passthrough bool) {
+	if req == nil {
+		return
+	}
+	if userAgent := s.resolveOpenAITLSFingerprintUserAgent(ctx, runtime, passthrough); userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
 	}
 	if runtime.UpstreamOriginator != "" {
 		req.Header.Set("Originator", runtime.UpstreamOriginator)

@@ -87,7 +87,7 @@ func (s *OpenAIGatewayService) ForwardEmbeddings(
 		proxyURL = account.Proxy.URL()
 	}
 	tlsRuntime := s.resolveOpenAITLSFingerprintRuntime(ctx, c, account)
-	applyOpenAITLSFingerprintRuntime(upstreamReq, tlsRuntime)
+	s.applyOpenAITLSFingerprintRuntime(ctx, upstreamReq, tlsRuntime, account.IsOpenAIPassthroughEnabled())
 	resp, err := s.httpUpstream.DoWithTLS(upstreamReq, proxyURL, account.ID, account.Concurrency, tlsRuntime.Profile)
 	if err != nil {
 		safeErr := sanitizeUpstreamErrorMessage(err.Error())

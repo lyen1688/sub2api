@@ -141,7 +141,7 @@ func (s *OpenAIGatewayService) forwardResponsesViaRawChatCompletions(
 		proxyURL = account.Proxy.URL()
 	}
 	tlsRuntime := s.resolveOpenAITLSFingerprintRuntime(ctx, c, account)
-	applyOpenAITLSFingerprintRuntime(upstreamReq, tlsRuntime)
+	s.applyOpenAITLSFingerprintRuntime(ctx, upstreamReq, tlsRuntime, account.IsOpenAIPassthroughEnabled())
 	resp, err := s.httpUpstream.DoWithTLS(upstreamReq, proxyURL, account.ID, account.Concurrency, tlsRuntime.Profile)
 	if err != nil {
 		// Transport-level failure (proxy/DNS/TCP/TLS — no HTTP response). Convert to

@@ -3,6 +3,7 @@ package admin
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/model"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
@@ -26,6 +27,7 @@ type CreateTLSFingerprintProfileRequest struct {
 	Platform                       string   `json:"platform"`
 	Name                           string   `json:"name" binding:"required"`
 	Description                    *string  `json:"description"`
+	UserAgent                      string   `json:"user_agent"`
 	EnableGREASE                   *bool    `json:"enable_grease"`
 	CipherSuites                   []uint16 `json:"cipher_suites"`
 	Curves                         []uint16 `json:"curves"`
@@ -46,6 +48,7 @@ type UpdateTLSFingerprintProfileRequest struct {
 	Platform                       *string  `json:"platform"`
 	Name                           *string  `json:"name"`
 	Description                    *string  `json:"description"`
+	UserAgent                      *string  `json:"user_agent"`
 	EnableGREASE                   *bool    `json:"enable_grease"`
 	CipherSuites                   []uint16 `json:"cipher_suites"`
 	Curves                         []uint16 `json:"curves"`
@@ -117,6 +120,7 @@ func (h *TLSFingerprintProfileHandler) Create(c *gin.Context) {
 		Platform:                       req.Platform,
 		Name:                           req.Name,
 		Description:                    req.Description,
+		UserAgent:                      strings.TrimSpace(req.UserAgent),
 		CipherSuites:                   req.CipherSuites,
 		Curves:                         req.Curves,
 		PointFormats:                   req.PointFormats,
@@ -356,6 +360,7 @@ func (h *TLSFingerprintProfileHandler) Update(c *gin.Context) {
 		Platform:                       existing.Platform,
 		Name:                           existing.Name,
 		Description:                    existing.Description,
+		UserAgent:                      existing.UserAgent,
 		EnableGREASE:                   existing.EnableGREASE,
 		CipherSuites:                   existing.CipherSuites,
 		Curves:                         existing.Curves,
@@ -379,6 +384,9 @@ func (h *TLSFingerprintProfileHandler) Update(c *gin.Context) {
 	}
 	if req.Description != nil {
 		profile.Description = req.Description
+	}
+	if req.UserAgent != nil {
+		profile.UserAgent = strings.TrimSpace(*req.UserAgent)
 	}
 	if req.EnableGREASE != nil {
 		profile.EnableGREASE = *req.EnableGREASE

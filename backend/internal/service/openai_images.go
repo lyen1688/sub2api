@@ -26,7 +26,6 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyurl"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint"
 	"github.com/Wei-Shaw/sub2api/internal/util/responseheaders"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -960,7 +959,7 @@ func (s *OpenAIGatewayService) forwardOpenAIImagesAPIKey(
 		proxyURL = account.Proxy.URL()
 	}
 	tlsRuntime := s.resolveOpenAITLSFingerprintRuntime(ctx, c, account)
-	applyOpenAITLSFingerprintRuntime(upstreamReq, tlsRuntime)
+	s.applyOpenAITLSFingerprintRuntime(ctx, upstreamReq, tlsRuntime, account.IsOpenAIPassthroughEnabled())
 	upstreamStart := time.Now()
 	resp, err := s.httpUpstream.DoWithTLS(upstreamReq, proxyURL, account.ID, account.Concurrency, tlsRuntime.Profile)
 	SetOpsLatencyMs(c, OpsUpstreamLatencyMsKey, time.Since(upstreamStart).Milliseconds())
@@ -2281,13 +2280,6 @@ func (s *OpenAIGatewayService) applyOpenAIBackendAPIResponseState(ctx context.Co
 	if err := s.accountRepo.UpdateExtra(updateCtx, account.ID, map[string]any{openAIWebProfileExtraKey: profile.ToExtraMap()}); err != nil {
 		logger.LegacyPrintf("service.openai_gateway", "persist openai web profile response state failed: account=%d err=%v", account.ID, err)
 	}
-}
-
-func (s *OpenAIGatewayService) resolveOpenAITLSProfile(account *Account) *tlsfingerprint.Profile {
-	if s == nil || s.tlsFPProfileService == nil {
-		return nil
-	}
-	return s.tlsFPProfileService.ResolveTLSProfile(account)
 }
 
 func (s *OpenAIGatewayService) openAIOAuthImageBridgeUpstreamOptions(ctx context.Context) HTTPUpstreamRequestOptions {

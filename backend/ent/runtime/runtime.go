@@ -2570,8 +2570,14 @@ func init() {
 	tlsfingerprintprofile.DefaultPlatform = tlsfingerprintprofileDescPlatform.Default.(string)
 	// tlsfingerprintprofile.PlatformValidator is a validator for the "platform" field. It is called by the builders before save.
 	tlsfingerprintprofile.PlatformValidator = tlsfingerprintprofileDescPlatform.Validators[0].(func(string) error)
+	// tlsfingerprintprofileDescUserAgent is the schema descriptor for user_agent field.
+	tlsfingerprintprofileDescUserAgent := tlsfingerprintprofileFields[3].Descriptor()
+	// tlsfingerprintprofile.DefaultUserAgent holds the default value on creation for the user_agent field.
+	tlsfingerprintprofile.DefaultUserAgent = tlsfingerprintprofileDescUserAgent.Default.(string)
+	// tlsfingerprintprofile.UserAgentValidator is a validator for the "user_agent" field. It is called by the builders before save.
+	tlsfingerprintprofile.UserAgentValidator = tlsfingerprintprofileDescUserAgent.Validators[0].(func(string) error)
 	// tlsfingerprintprofileDescEnableGrease is the schema descriptor for enable_grease field.
-	tlsfingerprintprofileDescEnableGrease := tlsfingerprintprofileFields[3].Descriptor()
+	tlsfingerprintprofileDescEnableGrease := tlsfingerprintprofileFields[4].Descriptor()
 	// tlsfingerprintprofile.DefaultEnableGrease holds the default value on creation for the enable_grease field.
 	tlsfingerprintprofile.DefaultEnableGrease = tlsfingerprintprofileDescEnableGrease.Default.(bool)
 	tlsfingerprintrouterMixin := schema.TLSFingerprintRouter{}.Mixin()

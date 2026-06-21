@@ -119,6 +119,36 @@ func TestTLSFingerprintProfileHandlerImportCaptures(t *testing.T) {
 	require.Equal(t, "Codex Desktop live capture", envelope.Data.Profiles[0].Profile.Name)
 }
 
+func TestTLSFingerprintProfileHandlerCreateAndUpdatePreservesUserAgent(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	repo := &tlsFingerprintProfileHandlerRepoStub{}
+	svc := service.NewTLSFingerprintProfileService(repo, nil)
+	handler := NewTLSFingerprintProfileHandler(svc, service.NewTLSFingerprintCaptureService(newTLSFingerprintCaptureHandlerRepoStub(), svc))
+
+	router := gin.New()
+	router.POST("/api/v1/admin/tls-fingerprint-profiles", handler.Create)
+	router.PUT("/api/v1/admin/tls-fingerprint-profiles/:id", handler.Update)
+
+	createBody := `{"platform":"openai","name":"Codex captured","user_agent":" codex_exec/0.141.0 (Ubuntu 24.4.0; x86_64) ","enable_grease":false,"cipher_suites":[4865],"curves":[29],"point_formats":[0],"signature_algorithms":[1027],"alpn_protocols":["http/1.1"],"supported_versions":[772],"key_share_groups":[29],"psk_modes":[1],"extensions":[0,11]}`
+	createRec := httptest.NewRecorder()
+	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/admin/tls-fingerprint-profiles", strings.NewReader(createBody))
+	createReq.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(createRec, createReq)
+	require.Equal(t, http.StatusOK, createRec.Code, createRec.Body.String())
+	require.Len(t, repo.profiles, 1)
+	require.Equal(t, "codex_exec/0.141.0 (Ubuntu 24.4.0; x86_64)", repo.profiles[0].UserAgent)
+
+	updateBody := `{"user_agent":"codex-tui/0.142.0","name":"Codex captured","platform":"openai","enable_grease":false,"cipher_suites":[4865],"curves":[29],"point_formats":[0],"signature_algorithms":[1027],"alpn_protocols":["http/1.1"],"supported_versions":[772],"key_share_groups":[29],"psk_modes":[1],"extensions":[0,11]}`
+	updateRec := httptest.NewRecorder()
+	updateReq := httptest.NewRequest(http.MethodPut, "/api/v1/admin/tls-fingerprint-profiles/1", strings.NewReader(updateBody))
+	updateReq.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(updateRec, updateReq)
+	require.Equal(t, http.StatusOK, updateRec.Code, updateRec.Body.String())
+	require.Len(t, repo.profiles, 1)
+	require.Equal(t, "codex-tui/0.142.0", repo.profiles[0].UserAgent)
+}
+
 func TestTLSFingerprintProfileHandlerCaptureTaskLifecycle(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
